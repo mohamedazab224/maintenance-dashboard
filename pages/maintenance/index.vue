@@ -86,18 +86,20 @@ const perPage = ref(10);
 const totalRecords = ref(0);
 const stats = ref([]);
 
-    <!-- نافذة تفاصيل الطلب -->
-    <UModal v-model="isDetailsModalOpen" :ui="{ width: 'max-w-2xl' }">
-      <UCard v-if="selectedRequest">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="text-lg font-bold">تفاصيل طلب الصيانة</h3>
-            <UBadge :color="getStatusColor(selectedRequest.status)">
-              {{ getStatusText(selectedRequest.status) }}
-            </UBadge>
-          </div>
-        </template>
-
+<!-- نافذة تفاصيل الطلب -->
+<UModal v-model="isDetailsModalOpen" :ui="{ width: 'max-w-2xl' }">
+  <UCard v-if="selectedRequest">
+    <template #header>
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-bold">تفاصيل طلب الصيانة</h3>
+        <UBadge :color="getStatusColor(selectedRequest.status)">
+          {{ getStatusText(selectedRequest.status) }}
+        </UBadge>
+      </div>
+    </template>
+    ...
+  </UCard>
+</UModal>
         <div class="space-y-4">
           <div>
             <h4 class="font-bold mb-1">العنوان</h4>
