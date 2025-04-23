@@ -10,107 +10,81 @@
       </UButton>
     </template>
   </UDashboardNavbar>
-  
-  <!-- محتوى الداشبورد الذي تريد تحميله -->
+
+  <!-- محتوى الداشبورد -->
   <div ref="dashboardContent">
     <!-- جدول طلبات الصيانة والإحصائيات -->
-  </div>
-</template>
-<template>
-  <UContainer>
-    <UCard>
-      <template #header>
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-bold">أرشيف طلبات الصيانة</h2>
-          <UButton
-            icon="i-heroicons-arrow-path"
-            color="gray"
-            variant="ghost"
-            :loading="isLoading"
-            @click="fetchMaintenanceRequests"
-          />
-        </div>
-      </template>
-
-      <!-- بطاقات الإحصائيات -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <UCard v-for="stat in stats" :key="stat.name">
-          <div class="flex items-center gap-4">
-            <UIcon :name="stat.icon" class="text-2xl" :class="stat.iconClass" />
-            <div>
-              <div class="text-sm text-gray-500">{{ stat.name }}</div>
-              <div class="text-xl font-bold">{{ stat.value }}</div>
-            </div>
-          </div>
-        </UCard>
-      </div>
-
-      <!-- جدول طلبات الصيانة -->
-      <UTable
-        :columns="columns"
-        :rows="maintenanceRequests"
-        :loading="isLoading"
-        :sort="{ column: 'created_at', direction: 'desc' }"
-        @sort="sortTable"
-      >
-        <template #empty-state>
-          <div class="flex flex-col items-center justify-center py-6">
-            <UIcon name="i-heroicons-document-text" class="text-3xl mb-2 text-gray-400" />
-            <p>لا توجد طلبات صيانة مؤرشفة</p>
-          </div>
-        </template>
-
-        <!-- تخصيص عرض الخلايا -->
-        <template #status-data="{ row }">
-          <UBadge :color="getStatusColor(row.status)">{{ getStatusText(row.status) }}</UBadge>
-        </template>
-
-        <template #priority-data="{ row }">
-          <UBadge :color="getPriorityColor(row.priority)">{{ getPriorityText(row.priority) }}</UBadge>
-        </template>
-
-        <template #created_at-data="{ row }">
-          {{ formatDate(row.created_at) }}
-        </template>
-
-        <template #completion_date-data="{ row }">
-          {{ formatDate(row.completion_date) || 'غير محدد' }}
-        </template>
-
-        <template #estimated_cost-data="{ row }">
-          {{ formatCurrency(row.estimated_cost) }}
-        </template>
-
-        <template #actual_cost-data="{ row }">
-          {{ formatCurrency(row.actual_cost) }}
-        </template>
-
-        <template #actions-data="{ row }">
-          <UDropdown :items="getActionItems(row)">
+    <UContainer>
+      <UCard>
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold">أرشيف طلبات الصيانة</h2>
             <UButton
+              icon="i-heroicons-arrow-path"
               color="gray"
               variant="ghost"
-              icon="i-heroicons-ellipsis-vertical"
+              :loading="isLoading"
+              @click="fetchMaintenanceRequests"
             />
-          </UDropdown>
-        </template>
-      </UTable>
-
-      <!-- ترقيم الصفحات -->
-      <template #footer>
-        <div class="flex justify-between items-center">
-          <div class="text-sm text-gray-500">
-            إجمالي السجلات: {{ totalRecords }}
           </div>
-          <UPagination
-            v-model="currentPage"
-            :total="totalRecords"
-            :per-page="perPage"
-            @change="changePage"
-          />
+        </template>
+
+        <!-- بطاقات الإحصائيات -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <UCard v-for="stat in stats" :key="stat.name">
+            <div class="flex items-center gap-4">
+              <UIcon :name="stat.icon" class="text-2xl" :class="stat.iconClass" />
+              <div>
+                <div class="text-sm text-gray-500">{{ stat.name }}</div>
+                <div class="text-xl font-bold">{{ stat.value }}</div>
+              </div>
+            </div>
+          </UCard>
         </div>
-      </template>
-    </UCard>
+
+        <!-- جدول طلبات الصيانة -->
+        <UTable
+          :columns="columns"
+          :rows="maintenanceRequests"
+          :loading="isLoading"
+          :sort="{ column: 'created_at', direction: 'desc' }"
+          @sort="sortTable"
+        >
+          <template #empty-state>
+            <div class="flex flex-col items-center justify-center py-6">
+              <UIcon name="i-heroicons-document-text" class="text-3xl mb-2 text-gray-400" />
+              <p>لا توجد طلبات صيانة مؤرشفة</p>
+            </div>
+          </template>
+        </UTable>
+
+        <!-- ترقيم الصفحات -->
+        <template #footer>
+          <div class="flex justify-between items-center">
+            <div class="text-sm text-gray-500">إجمالي السجلات: {{ totalRecords }}</div>
+            <UPagination
+              v-model="currentPage"
+              :total="totalRecords"
+              :per-page="perPage"
+              @change="changePage"
+            />
+          </div>
+        </template>
+      </UCard>
+    </UContainer>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+
+const dashboardContent = ref(null);
+const maintenanceRequests = ref([]);
+const isLoading = ref(false);
+const currentPage = ref(1);
+const perPage = ref(10);
+const totalRecords = ref(0);
+const stats = ref([]);
 
     <!-- نافذة تفاصيل الطلب -->
     <UModal v-model="isDetailsModalOpen" :ui="{ width: 'max-w-2xl' }">
@@ -197,10 +171,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-
-// مرجع لمحتوى الداشبورد
-const dashboardContent = ref(null)
+const supabase = useSupabaseClient()
 
 // حالة البيانات
 const maintenanceRequests = ref([])
@@ -244,11 +215,18 @@ const fetchMaintenanceRequests = async () => {
     const from = (currentPage.value - 1) * perPage.value
     const to = from + perPage.value - 1
     
-    // استعلام البيانات
+    // استعلام عدد السجلات
+    const { count } = await supabase
+      .from('maintenance_requests_archive')
+      .select('*', { count: 'exact', head: true })
+    
+    totalRecords.value = count || 0
+    
+    // استعلام البيانات مع الترتيب والصفحات
     const { data, error } = await supabase
       .from('maintenance_requests_archive')
-      .select('*', { count: 'exact' })
-      .order(sortBy.value.column, { ascending: sortBy.value.direction === 'asc' })
+      .select('*')
+     order(sortBy.value.column, { ascending: sortBy.value.direction === 'asc' })
       .range(from, to)
     
     if (error) {
@@ -437,52 +415,5 @@ const getPriorityText = (priority) => {
 onMounted(() => {
   fetchMaintenanceRequests()
 })
-
-// وظيفة تحميل الداشبورد كملف PDF
-const downloadAsPDF = async () => {
-  const html2pdf = await import('html2pdf.js')
-  
-  // إنشاء نسخة من محتوى الداشبورد للطباعة
-  const printContent = dashboardContent.value.cloneNode(true)
-  
-  // إزالة العناصر غير المطلوبة في PDF
-  printContent.querySelectorAll('.no-print').forEach(el => el.remove())
-  
-  // إضافة ترويسة وتذييل
-  const header = document.createElement('div')
-  header.innerHTML = `<h1>تقرير أرشيف طلبات الصيانة</h1><p>تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}</p>`
-  printContent.prepend(header)
-  
-  // تحويل إلى PDF
-  html2pdf.default()
-    .from(printContent)
-    .set({
-      margin: 10,
-      filename: 'maintenance-dashboard.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    })
-    .save()
-}
 </script>
 
-<style>
-@media print {
-  /* أنماط خاصة بالطباعة */
-  .no-print {
-    display: none !important;
-  }
-  
-  /* تحسين مظهر الجداول */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  th, td {
-    padding: 8px;
-    border: 1px solid #ddd;
-  }
-}
-</style>
