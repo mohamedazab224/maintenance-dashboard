@@ -245,22 +245,18 @@ const fetchMaintenanceRequests = async () => {
     const from = (currentPage.value - 1) * perPage.value
     const to = from + perPage.value - 1
     
-    // استعلام عدد السجلات
-    const { count } = await supabase
-      .from('maintenance_requests_archive')
-      .select('*', { count: 'exact', head: true })
-    
-    totalRecords.value = count || 0
-    
-    .order(sortBy.value.column, { ascending: sortBy.value.direction === 'asc' })
-      .range(from, to)
-    
-    if (error) {
-      console.error('Error fetching maintenance requests:', error)
-      return
-    }
-    
-    maintenanceRequests.value = data || []
+   // استعلام عدد السجلات
+   const { data, count, error } = await supabase
+   .from('maintenance_requests_archive')
+   .select('*', { count: 'exact' })
+   .order(sortBy.value.column, { ascending: sortBy.value.direction === 'asc' })
+   .range(from, to);
+
+  if (error) {
+    console.error('Error fetching maintenance requests:', error);
+   return;
+}
+    maintenanceRequests.value = data || [];
     
     // جلب الإحصائيات
     await fetchStats()
@@ -312,7 +308,13 @@ const fetchStats = async () => {
     console.error('Error fetching stats:', error)
   }
 }
+const { data: avgData, error: avgError } = await supabase
+  .from('maintenance_requests_archive')
+  .select('AVG(actual_cost)', { head: true });
+if (avgError) throw avgError;
 
+const avgCost = avgData?.[0]?.avg || 0;
+stats.value[3].value = formatCurrency(avgCost);
 // تغيير الصفحة
 const changePage = (page) => {
   currentPage.value = page
@@ -334,8 +336,22 @@ const viewDetails = (request) => {
 // استعادة طلب من الأرشيف
 const restoreRequest = async (request) => {
   try {
-    // هنا يمكنك إضافة المنطق الخاص باستعادة الطلب من الأرشيف
-    // على سبيل المثال، نقل البيانات من جدول الأرشيف إلى جدول الطلبات النشطة
+  // منطق استعادة الطلب
+  isDetailsModalOpen.value = false;
+  fetchMaintenanceRequests();
+  useToast().add({
+    title: 'تمت الاستعادة بنجاح',
+    description: `تمت استعادة طلب الصيانة "${request.title}" بنجاح`,
+    color: 'green',
+  });
+} catch (error) {
+  console.error('Error restoring request:', error);
+  useToast().add({
+    title: 'خطأ في الاستعادة',
+    description: 'حدث خطأ أثناء محاولة استعادة طلب الصيانة',
+    color: 'red',
+  });
+}
     
     // إغلاق النافذة المنبثقة
     isDetailsModalOpen.value = false
@@ -423,15 +439,15 @@ const getActionItems = (row) => {
 
 // دوال مساعدة
 const formatDate = (dateString) => {
-  if (!dateString) return null
+  if (!dateString) return 'غير متوفر';
   return new Date(dateString).toLocaleDateString('ar-SA', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+    minute: '2-digit',
+  });
+};
 
 const formatCurrency = (amount) => {
   if (amount === null || amount === undefined) return '-'
@@ -443,23 +459,23 @@ const formatCurrency = (amount) => {
 
 const getStatusColor = (status) => {
   const statusColors = {
-    'pending': 'yellow',
+    pending: 'yellow',
     'in-progress': 'blue',
-    'completed': 'green',
-    'cancelled': 'red'
-  }
-  return statusColors[status] || 'gray'
-}
+    completed: 'green',
+    cancelled: 'red',
+  };
+  return statusColors[status] || 'gray';
+};
 
-const getStatusText = (status) => {
-  const statusTexts = {
-    'pending': 'قيد الانتظار',
-    'in-progress': 'قيد التنفيذ',
-    'completed': 'مكتمل',
-    'cancelled': 'ملغي'
-  }
-  return statusTexts[status] || status
-}
+const getPriorityColor = (priority) => {
+  const priorityColors = {
+    low: 'gray',
+    medium: 'blue',
+    high: 'orange',
+    urgent: 'red',
+  };
+  return priorityColors[priority] || 'gray';
+};
 
 const getPriorityColor = (priority) => {
   const priorityColors = {
