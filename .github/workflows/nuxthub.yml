@@ -29,10 +29,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Lint Vue Files
+        run: pnpm lint
+
       - name: Ensure NuxtHub module is installed
         run: pnpx nuxthub@latest ensure
 
       - name: Build application
+        env:
+          VITE_LOG_LEVEL: debug
         run: pnpm build
 
       - name: Deploy to NuxtHub
